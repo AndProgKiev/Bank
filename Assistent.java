@@ -1,10 +1,10 @@
 import Entity.Account;
 import Entity.Client;
 import Entity.Kurs;
-
+import Entity.Transaction;
 import javax.persistence.*;
 import java.sql.SQLException;
-import java.util.ArrayList;
+
 import java.util.List;
 
 public class Assistent {
@@ -12,9 +12,12 @@ public class Assistent {
     private EntityManager em;
     private EntityTransaction et;
 
+
+
     public Assistent() {
         emf= Persistence.createEntityManagerFactory("Myjp");
         em=emf.createEntityManager();
+
 
 
     }
@@ -37,6 +40,11 @@ public class Assistent {
     }
 
     public void addMoneyOnAccount(int clientId, String currencyName,double amountMoney ){
+        String transactionName ="Поплнение счета в валюте" + currencyName+ " на сумму: "+amountMoney;
+        Client client;
+
+
+
         em.getTransaction().begin();
         double newAmount=0;
         Account account;
@@ -46,12 +54,22 @@ public class Assistent {
         query.setParameter("clientID",clientId);
         account=(Account) query.getSingleResult();
 
+
+
         if(account!=null){
             newAmount=amountMoney+account.getAmountMoney();
         }else System.out.println("Client with id/currency account "+clientId+"doesnt exist");
 
         account.setAmountMoney(newAmount);
 
+        em.getTransaction().commit();
+
+        em.getTransaction().begin();
+        Query query1=em.createQuery("SELECT C FROM Client C WHERE C.clientId = :id",Client.class);
+        query1.setParameter("id",clientId);
+        client=(Client) query1.getSingleResult();
+        Transaction transaction=new Transaction(transactionName,client);
+        em.persist(transaction);
         em.getTransaction().commit();
     }
 
@@ -86,6 +104,9 @@ public class Assistent {
     }
 
     public void convertMoney(int clientID, String currencyFrom, String currencyTo, double amount){
+        String transactionName ="Конвертация валюты со счета в: " + currencyFrom+ " на счет в: "+currencyTo+ " на сумму: "+amount+" " +currencyFrom;
+        Client client;
+
         Account accountFrom;
         Account accountTo;
         double rate1;
@@ -124,6 +145,15 @@ public class Assistent {
             }else System.out.println("Incorrect currency");
         }
         em.getTransaction().commit();
+
+        em.getTransaction().begin();
+        Query query5=em.createQuery("SELECT C FROM Client C WHERE C.clientId = :id",Client.class);
+        query5.setParameter("id",clientID);
+        client=(Client) query5.getSingleResult();
+        Transaction transaction1=new Transaction(transactionName,client);
+        em.persist(transaction1);
+        em.getTransaction().commit();
+
     }
 
     public double getAllMoneyInUAH(int clientId){
