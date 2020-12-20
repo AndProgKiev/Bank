@@ -7,6 +7,7 @@ import javax.persistence.*;
 @Table(name="Transactions")
 public class Transaction {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int transactionId;
     private String transactionName;
     @ManyToOne
